@@ -22,7 +22,7 @@ class EuroDerivative(ABC):
     def initial_stock_price(self, value):
 
         if value < 0.:
-            raise ValueError('Initial stock price can not be less than 0.')
+            raise ValueError('Initial stock price cannot be less than 0.')
 
         self._initial_stock_price = value
 
