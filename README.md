@@ -6,3 +6,4 @@ The strategies already implemented are:
 
 + Covered Put
 + Covered Call
++ Protective Call
