@@ -7,12 +7,47 @@ plt.style.use('ggplot')
 
 class EuroDerivative(ABC):
 
-    def get_price(self, s0, risk_free, sigma, plazo, n, seed=None):
+    def __init__(self, initial_stock_price=None):
+
+        self._initial_stock_price = initial_stock_price
+
+        self._derivative_price = None
+
+    @property 
+    def initial_stock_price(self):
+
+        return self._initial_stock_price 
+
+    @initial_stock_price.setter
+    def initial_stock_price(self, value):
+
+        if value < 0.:
+            raise ValueError('Initial stock price can not be less than 0.')
+
+        self._initial_stock_price = value
+
+    @property
+    def derivative_price(self):
+
+        return self._derivative_price
+
+    @derivative_price.setter 
+    def derivative_price(self, value):
+
+        self._derivative_price = value 
+
+    def get_price(self, risk_free, sigma, plazo, n, initial_stock_price=None, seed=None):
+
+        if initial_stock_price:
+
+            self.initial_stock_price = initial_stock_price
 
         if seed:
             np.random.seed(seed)
 
-        return np.mean(self.payoff(Stock.sim_gbm(s0, risk_free, sigma, plazo, n)))
+        self.derivative_price = np.abs(np.mean(self.payoff(Stock.sim_gbm(self.initial_stock_price, risk_free, sigma, plazo, n))))
+        
+        return self.derivative_price 
 
     @abstractmethod
     def payoff(self, st):
@@ -48,6 +83,8 @@ class EuroDerivative(ABC):
 class VanillaOption(EuroDerivative):
 
     def __init__(self, option_type, strike):
+
+        super().__init__()
         
         self.type = option_type 
 
@@ -82,17 +119,34 @@ class Strategy(EuroDerivative):
 
     def __init__(self, name):
 
-        self.__strategy_name = name 
+        super().__init__()
 
-        self.__positions = []
+        self._strategy_name = name 
+
+        self._positions = []
+
+    @property 
+    def strategy_name(self):
+
+        return self._strategy_name 
+
+    @strategy_name.setter 
+    def strategy_name(self, value):
+
+        self._strategy_name = value 
+
+    @property 
+    def positions(self):
+
+        return self._positions 
 
     def __repr__(self):
 
-        output_title = [f'Strategy: {self.__strategy_name}', 20*'-']
+        output_title = [f'Strategy: {self.strategy_name}', 20*'-']
 
         pos_string = [f'{"Long " if pos[0] > 0 else "Short "}' + 
                       f'{abs(pos[0])} {pos[1].type} @ ' + 
-                      f'{pos[1].strike:.2f}' for pos in self.__positions]
+                      f'{pos[1].strike:.2f}' for pos in self.positions]
 
         end_line = [20*'-']
 
@@ -103,20 +157,20 @@ class Strategy(EuroDerivative):
     def add_position(self, pos):
 
         if isinstance(pos, list) or isinstance(pos, tuple):
-            self.__positions.extend(pos)
+            self.positions.extend(pos)
 
         else:
-            self.__positions.append(pos)
+            self.positions.append(pos)
 
     def payoff(self, st):
-        payoffs = np.sum(np.array([q * o.payoff(st) for q, o in self.__positions]),axis=0)
+        payoffs = np.sum(np.array([q * o.payoff(st) for q, o in self.positions]),axis=0)
         return payoffs
 
     def plot_payoff(self, min_val, max_val):
-
+ 
         fig, ax = super().plot_payoff(min_val, max_val)
 
-        ax.set_title(self.__strategy_name, fontsize=16)
+        ax.set_title(self.strategy_name, fontsize=16)
 
         plt.show()
 
@@ -130,6 +184,9 @@ if __name__ == '__main__':
 
     print(strategy)
 
-    print(f'Pricing: {strategy.get_price(10., 0.05, 0.15, 180, 1_000_000, 123)}')
+    params = {'risk_free': 0.05, 'sigma':0.15, 
+               'plazo': 180, 'n':1_000_000, 'initial_stock_price': 10, 'seed': 123}
+
+    print(f'Pricing: {strategy.get_price(**params)}')
 
     strategy.plot_payoff(8,15)
