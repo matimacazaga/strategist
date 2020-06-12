@@ -37,12 +37,31 @@ class ProtectiveCall(Strategy):
 
         self.initial_stock_price = initial_stock_price
 
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.initial_stock_price - D 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_loss = self.positions[1][1].strike - self.initial_stock_price + D    
+
+        print(f'Max Loss: {max_loss:.2f}')
 
 if __name__ == '__main__':
 
     initial_stock_price = 50.
 
-    strategy = CoveredPut(initial_stock_price, 45.)
+    strategy = ProtectiveCall(initial_stock_price, 55.)
 
     params = {'risk_free': 0.05, 'sigma':0.15, 
               'plazo': 180, 'n':1_000_000,
@@ -51,5 +70,8 @@ if __name__ == '__main__':
     print(f'Pricing: {strategy.get_price(**params)}')
 
     strategy.max_profit()
+
+    strategy.max_loss()
     
-    strategy.plot_payoff(35,55)
+    strategy.plot_payoff(0,65)
+
