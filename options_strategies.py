@@ -33,6 +33,10 @@ class ProtectiveCall(Strategy):
 
         super().__init__('Protective Call')
 
+        if strike > initial_stock_price:
+
+            raise ValueError('The call option must be ATM or OTM.')
+
         self.add_position([(-1, Stock(initial_stock_price)), (1, Call(strike))])
 
         self.initial_stock_price = initial_stock_price
@@ -63,6 +67,17 @@ class BullPutSpread(Strategy):
 
         super().__init__('Bull Put Spread')
 
+        if strike_1 >= initial_stock_price:
+
+            raise ValueError('The long option must be OTM.')
+
+        if strike_2 >= initial_stock_price:
+
+            raise ValueError('The short option must be OTM.')
+
+        if strike_2 < strike_1:
+            raise ValueError('The strike price 2 must be greater than the strike price 1')
+
         self.add_position([(1, Put(strike_1)), (-1, Put(strike_2))])
 
         self.initial_stock_price = initial_stock_price
@@ -73,7 +88,7 @@ class BullPutSpread(Strategy):
 
             C = self.derivative_price
         
-        return C 
+        print(f'Max Profit: {C:.2f}')
 
     def max_loss(self, C=None):
 
@@ -81,14 +96,110 @@ class BullPutSpread(Strategy):
 
             C = self.derivative_price 
 
-        return self.positions[0][1].strike - self.positions[1][1].strike - C 
+        max_loss = self.positions[0][1].strike - self.positions[1][1].strike - C  
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+class BearPutSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__('Bear Put Spread')
+
+        self.initial_stock_price = initial_stock_price
+
+        if strike_1 != initial_stock_price:
+
+            raise ValueError('The long put must be ATM.')
+
+        if strike_2 >= initial_stock_price:
+
+            raise ValueError('The short put must be OTM.')
+
+        if strike_2 > strike_1:
+
+            raise ValueError('The strike price 2 must be less than the strike price 1')
+
+        self.add_position([(1, Put(strike_1)), (-1, Put(strike_2))])
+
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.positions[0][1].strike - self.positions[1][1].strike - D   
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price 
+
+        print(f'Max Loss: {D:.2f}')
+
+class SyntheticShortForward(Strategy):
+
+    def __init__(self, initial_stock_price):
+
+        super().__init__('Synthetic Short Forward')
+
+        self.initial_stock_price = initial_stock_price
+
+        self.add_position([(1, Put(initial_stock_price)), (-1, Call(initial_stock_price))])
+
+    def max_profit(self, H=None):
+
+        if H is None: 
+
+            H = self.derivative_price
+
+        max_profit = self.initial_stock_price - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+    
+    def max_loss(self, H=None):
+
+        print(f'Max Loss: {np.inf}')
+
+class ShortRiskReversal(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__('Short Risk Reversal')
+
+        if strike_1 > initial_stock_price:
+
+            raise ValueError('The put option must be OTM.')
+
+        if strike_2 < initial_stock_price:
+            
+            raise ValueError('The call option must be OTM.')
+
+        self.add_position([(1, Put(strike_1)), (-1, Call(strike_2))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[0][1].strike - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+    def max_loss(self, H=None):
+
+        print(f'Max Loss: {np.inf}')
 
 if __name__ == '__main__':
 
     initial_stock_price = 275.
     #initial_stock_price = 50.
 
-    strategy = BullPutSpread(initial_stock_price, 270., 280.)
+    strategy = SyntheticShortForward(initial_stock_price)
     #strategy = ProtectiveCall(initial_stock_price, 55.)
 
     params = {'risk_free': 0.05, 'sigma': 0.15,
