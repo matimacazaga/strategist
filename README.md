@@ -7,3 +7,8 @@ The strategies already implemented are:
 + Covered Put
 + Covered Call
 + Protective Call
++ Protective Put
++ Bull Put Spread
++ Bear Put Spread
++ Synthetic Short Forward
++ Short Risk Reversal

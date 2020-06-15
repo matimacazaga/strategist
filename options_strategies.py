@@ -1,6 +1,37 @@
 from options_base import Strategy, Put, Call
-import numpy as np 
+import numpy as np
 from stocks_base import Stock
+
+
+class CoveredCall(Strategy):
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Covered Call')
+
+        self.add_position([(1, Stock(initial_stock_price)), (-1, Call(strike))])
+
+        self.initial_stock_price = initial_stock_price
+
+    def max_profit(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_profit = self.positions[1][1].strike - self.initial_stock_price + C
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+    def max_loss(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_loss = self.initial_stock_price - C
+
+        print(f'Max Loss: {max_loss}')
+
 
 class CoveredPut(Strategy):
 
@@ -13,11 +44,11 @@ class CoveredPut(Strategy):
         self.initial_stock_price = initial_stock_price
 
     def max_profit(self, C=None):
-        
+
         if C is None:
 
             C = self.derivative_price
-        
+
         max_profit = self.initial_stock_price - self.positions[1][1].strike + C
 
         print(f'Max Profit: {max_profit:.2f}')
@@ -47,7 +78,7 @@ class ProtectiveCall(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.initial_stock_price - D 
+        max_profit = self.initial_stock_price - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -57,9 +88,38 @@ class ProtectiveCall(Strategy):
 
             D = self.derivative_price
 
-        max_loss = self.positions[1][1].strike - self.initial_stock_price + D    
+        max_loss = self.positions[1][1].strike - self.initial_stock_price + D
 
         print(f'Max Loss: {max_loss:.2f}')
+
+class ProtectivePut(Strategy):
+
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Protective Put')
+
+        if strike < initial_stock_price:
+
+            raise ValueError('The Put option must be ATM or OTM.')
+
+        self.add_position([(1, Stock(initial_stock_price)), (1, Put(strike))])
+
+        self.initial_stock_price = initial_stock_price
+
+    def max_profit(self):
+
+        print(f'Max Profit: {np.inf}')
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_loss = self.initial_stock_price - self.positions[1][1].strike + D
+
+        print(f'Max Loss: {max_loss:.2f}')
+
 
 class BullPutSpread(Strategy):
 
@@ -87,16 +147,16 @@ class BullPutSpread(Strategy):
         if C is None:
 
             C = self.derivative_price
-        
+
         print(f'Max Profit: {C:.2f}')
 
     def max_loss(self, C=None):
 
         if C is None:
 
-            C = self.derivative_price 
+            C = self.derivative_price
 
-        max_loss = self.positions[0][1].strike - self.positions[1][1].strike - C  
+        max_loss = self.positions[0][1].strike - self.positions[1][1].strike - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -128,7 +188,7 @@ class BearPutSpread(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[0][1].strike - self.positions[1][1].strike - D   
+        max_profit = self.positions[0][1].strike - self.positions[1][1].strike - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -136,7 +196,7 @@ class BearPutSpread(Strategy):
 
         if D is None:
 
-            D = self.derivative_price 
+            D = self.derivative_price
 
         print(f'Max Loss: {D:.2f}')
 
@@ -152,14 +212,14 @@ class SyntheticShortForward(Strategy):
 
     def max_profit(self, H=None):
 
-        if H is None: 
+        if H is None:
 
             H = self.derivative_price
 
-        max_profit = self.initial_stock_price - H 
+        max_profit = self.initial_stock_price - H
 
         print(f'Max Profit: {max_profit:.2f}')
-    
+
     def max_loss(self, H=None):
 
         print(f'Max Loss: {np.inf}')
@@ -175,7 +235,7 @@ class ShortRiskReversal(Strategy):
             raise ValueError('The put option must be OTM.')
 
         if strike_2 < initial_stock_price:
-            
+
             raise ValueError('The call option must be OTM.')
 
         self.add_position([(1, Put(strike_1)), (-1, Call(strike_2))])
@@ -186,7 +246,7 @@ class ShortRiskReversal(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[0][1].strike - H 
+        max_profit = self.positions[0][1].strike - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -203,9 +263,9 @@ if __name__ == '__main__':
     #strategy = ProtectiveCall(initial_stock_price, 55.)
 
     params = {'risk_free': 0.05, 'sigma': 0.15,
-              'plazo': 30, 'n': 1_000_000, 
+              'plazo': 30, 'n': 1_000_000,
               'seed': 123}
-    #params = {'risk_free': 0.05, 'sigma':0.15, 
+    #params = {'risk_free': 0.05, 'sigma':0.15,
     #          'plazo': 180, 'n':1_000_000,
     #          'seed': 123}
 
@@ -216,6 +276,6 @@ if __name__ == '__main__':
     strategy.max_profit()
 
     strategy.max_loss()
-    
+
     strategy.plot_payoff(200, 300)
 
