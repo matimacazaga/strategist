@@ -130,11 +130,6 @@ class Strategy(EuroDerivative):
 
         return self._strategy_name 
 
-    @strategy_name.setter 
-    def strategy_name(self, value):
-
-        self._strategy_name = value 
-
     @property 
     def positions(self):
 
@@ -157,10 +152,10 @@ class Strategy(EuroDerivative):
     def add_position(self, pos):
 
         if isinstance(pos, list) or isinstance(pos, tuple):
-            self.positions.extend(pos)
+            self._positions.extend(pos)
 
         else:
-            self.positions.append(pos)
+            self._positions.append(pos)
 
     def payoff(self, st):
         payoffs = np.sum(np.array([q * o.payoff(st) for q, o in self.positions]),axis=0)
@@ -168,7 +163,7 @@ class Strategy(EuroDerivative):
 
     def plot_payoff(self, min_val, max_val):
  
-        fig, ax = super().plot_payoff(min_val, max_val)
+        _, ax = super().plot_payoff(min_val, max_val)
 
         ax.set_title(self.strategy_name, fontsize=16)
 
