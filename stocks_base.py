@@ -7,6 +7,8 @@ class Stock(ABC):
 
         self.__s0 = s0
 
+        self.type = 'Stock'
+
     @staticmethod
     def sim_gbm(s0, drift, sigma, plazo, n=None):
 

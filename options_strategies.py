@@ -18,7 +18,7 @@ class CoveredCall(Strategy):
 
             C = self.derivative_price
 
-        max_profit = self.positions[1][1].strike - self.initial_stock_price + C
+        max_profit = self.positions[1].get_strike() - self.initial_stock_price + C
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -49,7 +49,7 @@ class CoveredPut(Strategy):
 
             C = self.derivative_price
 
-        max_profit = self.initial_stock_price - self.positions[1][1].strike + C
+        max_profit = self.initial_stock_price - self.positions[1].get_strike() + C
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -88,7 +88,7 @@ class ProtectiveCall(Strategy):
 
             D = self.derivative_price
 
-        max_loss = self.positions[1][1].strike - self.initial_stock_price + D
+        max_loss = self.positions[1].get_strike() - self.initial_stock_price + D
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -116,7 +116,7 @@ class ProtectivePut(Strategy):
 
             D = self.derivative_price
 
-        max_loss = self.initial_stock_price - self.positions[1][1].strike + D
+        max_loss = self.initial_stock_price - self.positions[1].get_strike() + D
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -156,7 +156,7 @@ class BullPutSpread(Strategy):
 
             C = self.derivative_price
 
-        max_loss = self.positions[0][1].strike - self.positions[1][1].strike - C
+        max_loss = self.positions[0].get_strike() - self.positions[1].get_strike() - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -188,7 +188,7 @@ class BearPutSpread(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[0][1].strike - self.positions[1][1].strike - D
+        max_profit = self.positions[0].get_strike() - self.positions[1].get_strike() - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -246,7 +246,7 @@ class ShortRiskReversal(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[0][1].strike - H
+        max_profit = self.positions[0].get_strike() - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -256,26 +256,24 @@ class ShortRiskReversal(Strategy):
 
 if __name__ == '__main__':
 
-    initial_stock_price = 275.
-    #initial_stock_price = 50.
+    #initial_stock_price = 275.
+    initial_stock_price = 60.
 
-    strategy = SyntheticShortForward(initial_stock_price)
-    #strategy = ProtectiveCall(initial_stock_price, 55.)
+    #strategy = SyntheticShortForward(initial_stock_price)
+    strategy = ProtectiveCall(initial_stock_price, 55.)
 
-    params = {'risk_free': 0.05, 'sigma': 0.15,
-              'plazo': 30, 'n': 1_000_000,
-              'seed': 123}
-    #params = {'risk_free': 0.05, 'sigma':0.15,
-    #          'plazo': 180, 'n':1_000_000,
+    #params = {'risk_free': 0.05, 'sigma': 0.15,
+    #          'plazo': 30, 'n': 1_000_000,
     #          'seed': 123}
+    params = {'risk_free': 0.05, 'sigma':0.15,
+              'plazo': 180, 'n':1_000_000,
+              'seed': 123}
 
     print(f'Pricing: {strategy.get_price(**params)}')
-
-    #print(f'Pricing: {strategy.get_price(**params)}')
 
     strategy.max_profit()
 
     strategy.max_loss()
 
-    strategy.plot_payoff(200, 300)
+    strategy.plot_payoff(0., initial_stock_price + 10)
 

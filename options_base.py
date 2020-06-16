@@ -115,6 +115,50 @@ class Put(VanillaOption):
 
         return np.maximum(0., self.strike - st)
 
+class Position:
+
+    def __init__(self, quantity, instrument):
+
+        self.__quantity = quantity
+
+        self.__instrument = instrument 
+
+    @property
+    def quantity(self):
+
+        return self.__quantity 
+
+    @quantity.setter
+    def quantity(self, value):
+        if isinstance(value, int):
+            self.__quantity = value
+        else:
+            raise ValueError('Quantity must be an integer') 
+
+    @property
+    def instrument(self):
+
+        return self.__instrument 
+    
+    @instrument.setter
+    def intrument(self, instrument):
+
+        self.__instrument = instrument 
+
+    def get_type(self):
+
+        return self.instrument.type 
+
+    def get_strike(self):
+
+        if hasattr(self.__instrument, 'strike'):
+
+            return self.__instrument.strike 
+        
+        else:
+
+            raise AttributeError('The selected instrument hasn\'t got a strike price.')
+        
 class Strategy(EuroDerivative):
 
     def __init__(self, name):
@@ -139,9 +183,9 @@ class Strategy(EuroDerivative):
 
         output_title = [f'Strategy: {self.strategy_name}', 20*'-']
 
-        pos_string = [f'{"Long " if pos[0] > 0 else "Short "}' + 
-                      f'{abs(pos[0])} {pos[1].type} @ ' + 
-                      f'{pos[1].strike:.2f}' for pos in self.positions]
+        pos_string = [f'{"Long " if pos.quantity > 0 else "Short "}' + 
+                      f'{abs(pos.quantity)} {pos.get_type()} @ ' + 
+                      f'{pos.get_strike():.2f}' for pos in self.positions]
 
         end_line = [20*'-']
 
@@ -149,16 +193,26 @@ class Strategy(EuroDerivative):
 
         return '\n'.join(string_to_print)
 
-    def add_position(self, pos):
+    def add_position(self, positions):
 
+        if isinstance(positions, list):
+            for q,i in positions:
+
+                self._positions.append(Position(q,i))
+
+        else:
+            raise TypeError('The positions argument must be a list')
+        """
         if isinstance(pos, list) or isinstance(pos, tuple):
             self._positions.extend(pos)
 
         else:
             self._positions.append(pos)
-
+        """
     def payoff(self, st):
-        payoffs = np.sum(np.array([q * o.payoff(st) for q, o in self.positions]),axis=0)
+
+        payoffs = np.sum(np.array([pos.quantity * pos.instrument.payoff(st) for pos in self.positions]),axis=0)
+        
         return payoffs
 
     def plot_payoff(self, min_val, max_val):
@@ -170,6 +224,14 @@ class Strategy(EuroDerivative):
         plt.show()
 
 if __name__ == '__main__':
+
+    positions = []
+
+    for q,i in [(1, Call(10.))]:
+
+        positions.append(Position(q,i))
+
+    print(positions[0].get_strike())
 
     strategy = Strategy('Butterfly')
 
