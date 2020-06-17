@@ -17,3 +17,19 @@ The strategies already implemented are:
 + Long Strangle
 + Short Straddle
 + Short Guts
++ Long Put Synthetic Straddle
++ Short Put Synthetic Straddle
++ Covered Short Strangle
++ Strip
++ Put Ratio Backspread
++ Ratio Put Spread
++ Long Put Butterfly
++ Modified Long Put Butterlfy
++ Short Put Butterfly
++ Short Iron Butterfly
++ Long Put Condor
++ Short Put Condor
++ Short Iron Condor
++ Collar
++ Bearish Long Seagull Spread
++ Bullish Long Seagull Spread

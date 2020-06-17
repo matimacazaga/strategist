@@ -508,6 +508,750 @@ class ShortGuts(Strategy):
 
         return max_loss  
 
+class LongPutSyntheticStraddle(Strategy):
+
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Long Put Synthetic Straddle')
+
+        self.initial_stock_price = initial_stock_price
+
+        delta_1 = 0.1 * initial_stock_price
+
+        if not is_atm('Put', initial_stock_price, strike, delta_1):
+
+            raise ValueError('The put options must be ATM.')
+
+        self.add_position([(1, Stock(initial_stock_price)), (2, Put(strike))])
+
+    def max_profit(self, D=None):
+
+        max_profit = np.inf 
+
+        print(f'Max Profit: {max_profit}')
+
+        return max_profit 
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_loss = D - (self.positions[1].get_strike() - self.initial_stock_price)
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class ShortPutSyntheticStraddle(Strategy):
+
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Short Put Synthetic Straddle')
+
+        self.initial_stock_price = initial_stock_price
+
+        delta_1 = 0.1 * initial_stock_price
+
+        if not is_atm('Put', initial_stock_price, strike, delta_1):
+
+            raise ValueError('The put options must be ATM.')
+
+        self.add_position([(-1, Stock(initial_stock_price)), (-2, Put(strike))])
+
+    def max_profit(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_profit = self.initial_stock_price - self.positions[1].get_strike() + C 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, C=None):
+
+        max_loss = np.inf 
+
+        print(f'Max Loss: {max_loss}')
+
+        return max_loss 
+
+class CoveredShortStrangle(CoveredCall):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__(initial_stock_price, strike_1)
+
+        self.strategy_name = 'Covered Short Strangle'
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The put option must be OTM.')
+
+        self.add_position([(-1, Put(strike_2))])
+
+    def max_loss(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_loss = self.initial_stock_price + self.positions[2].get_strike() - C 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class Strip(Strategy):
+
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Strip')
+
+        self.initial_stock_price = initial_stock_price
+
+        delta = 0.1 * initial_stock_price
+
+        if not is_atm('Call', initial_stock_price, strike, delta):
+
+            raise ValueError('The call option must be ATM.')
+
+        if not is_atm('Put', initial_stock_price, strike, delta):
+
+            raise ValueError('The put options must be ATM.')
+
+        self.add_position([(1, Call(strike)), (2, Put(strike))])
+
+    def max_profit(self, D=None):
+
+        max_profit = np.inf 
+
+        print(f'Max Profit: {max_profit}')
+
+        return max_profit 
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        print(f'Max Loss: {D:.2f}')
+
+        return D   
+
+class PutRatioBackspread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, n_short=1, n_long=2):
+
+        super().__init__('Put Ratio Backspread')
+
+        self.initial_stock_price = initial_stock_price
+
+        if n_short > n_long:
+
+            raise ValueError('The amount of long positions must be greater than '
+                             'the amount of short positions.')
+
+        delta_1 = 0.1 * initial_stock_price
+
+        if not is_atm('Put', initial_stock_price, strike_1, delta_1):
+
+            raise ValueError('The short put options must be ATM.')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The long put options must be OTM.')
+
+        self.add_position([(n_short, Put(strike_1)), (n_long, Put(strike_2))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[1].quantity * self.positions[1].get_strike() - self.positions[0].quantity * self.positions[0].get_strike() - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[0].quantity * (self.positions[0].get_strike() - self.positions[1].get_strike()) + H 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class RatioPutSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, n_short=2, n_long=1):
+
+        super().__init__('Ratio Put Spread')
+
+        self.initial_stock_price = initial_stock_price
+
+        if n_long > n_short:
+
+            raise ValueError('The amount of short positions must be greater ' 
+                             'than the amount of long positions.')
+
+        delta_1 = 0.1 * initial_stock_price
+
+        if not is_atm('Put', initial_stock_price, strike_1, delta_1):
+
+            raise ValueError('The short put options must be ATM.')
+
+        if not is_itm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The long put options must be ITM.')
+
+        self.add_position([(n_short, Put(strike_1)), (n_long, Put(strike_2))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[1].quantity * (self.positions[1].get_strike() - self.positions[0].get_strike()) - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[0].quantity * self.positions[0].get_strike() - self.positions[1].quantity * self.positions[1].get_strike() + H 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class LongPutButterfly(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Long Put Butterfly')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_3 - strike_2 == strike_2 - strike_1:
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if not is_atm('Put', initial_stock_price, strike_2, 0.1*initial_stock_price):
+
+            raise ValueError('The short put options must be ATM.')
+
+        if not is_itm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The last put option must be ITM.')
+
+        self.add_position([(1, Put(strike_1)), (-2, Put(strike_2)), (1, Put(strike_3))])
+
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        print(f'Max Loss: {D:.2f}')
+
+        return D   
+
+class ModifiedLongPutButterfly(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Long Put Butterfly')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_3 - strike_2 < strike_2 - strike_1:
+
+            raise ValueError('Strike prices must fulfill strike_3-strike_2 < '
+                             'strike_2 - strike_1.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if not is_atm('Put', initial_stock_price, strike_2, 0.1*initial_stock_price):
+
+            raise ValueError('The short put options must be ATM.')
+
+        if not is_itm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The last put option must be ITM.')
+
+        self.add_position([(1, Put(strike_1)), (-2, Put(strike_2)), (1, Put(strike_3))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[2].get_strike() - self.positions[1].get_strike() - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = 2 * self.positions[1].get_strike() - self.positions[0].get_strike() - self.positions[2].get_strike() + H
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class ShortPutButterfly(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Short Put Butterfly')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_3 - strike_2 == strike_2 - strike_1:
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not is_itm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first short put option must be ITM.')
+
+        if not is_atm('Put', initial_stock_price, strike_2, 0.1 * initial_stock_price):
+
+            raise ValueError('The long put options must be ATM.')
+
+        if not is_otm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The last short put option must be OTM.')
+
+        self.add_position([(-1, Put(strike_1)), (2, Put(strike_2)), (-1, Put(strike_3))])
+
+    def max_profit(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        print(f'Max Profit: {C:.2f}')
+
+        return C 
+
+    def max_loss(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() - C  
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class ShortIronButterfly(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Short Iron Butterfly')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_2 - strike_1 == strike_3 - strike_2:
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first short put option must be OTM.')
+
+        if not is_atm('Put', initial_stock_price, strike_2, 0.1*initial_stock_price):
+
+            raise ValueError('The long put and call options must be ATM.')
+
+        if not is_otm('Call', initial_stock_price, strike_3):
+
+            raise ValueError('The last short call option must be OTM.')
+
+        self.add_position([(-1, Put(strike_1)), (1, Put(strike_2)), (1, Call(strike_2)), (-1, Call(strike_3))])
+
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+    
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+        
+        print(f'Max Loss: {D:.2f}')
+
+        return D   
+
+class LongPutCondor(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3, strike_4):
+
+        super().__init__('Long Put Condor')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not strike_2 > strike_1: 
+
+            raise ValueError('Strike price 2 must be greater than strike price 1.')
+
+        if not strike_4 > strike_3:
+
+            raise ValueError('Strike price 4 must be greater than strike price 3.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The second short put option must be OTM.')
+
+        if not is_itm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The third short put option must be ITM.')
+
+        if not is_itm('Put', initial_stock_price, strike_4):
+
+            raise ValueError('The last long put option must be ITM.')
+
+        self.add_position([(1, Put(strike_1)), (-1, Put(strike_2)), (-1, Put(strike_3)), (1, Put(strike_4))])
+
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        print(f'Max Loss: {D:.2f}')
+
+        return D   
+
+class ShortPutCondor(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3, strike_4):
+
+        super().__init__('Short Put Condor')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not strike_2 > strike_1: 
+
+            raise ValueError('Strike price 2 must be greater than strike price 1.')
+
+        if not strike_4 > strike_3:
+
+            raise ValueError('Strike price 4 must be greater than strike price 3.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first short put option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The second long put option must be OTM.')
+
+        if not is_itm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The third long put option must be ITM.')
+
+        if not is_itm('Put', initial_stock_price, strike_4):
+
+            raise ValueError('The last short put option must be ITM.')
+
+        self.add_position([(-1, Put(strike_1)), (1, Put(strike_2)), (1, Put(strike_3)), (-1, Put(strike_4))])
+
+    def max_profit(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        print(f'Max Profit: {C:.2f}')
+
+        return C   
+
+    def max_loss(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() - C  
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class ShortIronCondor(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3, strike_4):
+
+        super().__init__('Short Iron Condor')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+
+            raise ValueError('Strike prices must be equidistant.')
+
+        if not strike_2 > strike_1: 
+
+            raise ValueError('Strike price 2 must be greater than strike price 1.')
+
+        if not strike_4 > strike_3:
+
+            raise ValueError('Strike price 4 must be greater than strike price 3.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first short put option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The second long put option must be OTM.')
+
+        if not is_otm('Call', initial_stock_price, strike_3):
+
+            raise ValueError('The third long call option must be OTM.')
+
+        if not is_otm('Call', initial_stock_price, strike_4):
+
+            raise ValueError('The last short call option must be OTM.')
+
+        self.add_position([(-1, Put(strike_1)), (1, Put(strike_2)), (1, Call(strike_3)), (-1, Call(strike_4))])
+
+    def max_profit(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit  
+
+    def max_loss(self, D=None):
+
+        if D is None:
+
+            D = self.derivative_price
+
+        print(f'Max Loss: {D:.2f}')
+
+        return D   
+
+class Collar(CoveredCall):
+
+    def __init__(self, strike_1, strike_2):
+
+        if strike_2 < strike_1:
+
+            raise ValueError('The strike price of the call option must be '
+                             'greater than the strike price of the put option.')
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if not is_otm('Call', initial_stock_price, strike_2):
+
+            raise ValueError('The last short call option must be OTM.')
+
+        super().__init__(self, initial_stock_price, strike_2)
+
+        self.strategy_name = 'Collar'
+
+        self.add_position([(1, Put(strike_1))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.initial_stock_price - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.initial_stock_price - self.positions[0].get_strike + H 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class BearishLongSeagullSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Bearish Long Seagull Spread')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if not is_atm('Call', initial_stock_price, strike_2, 0.1*initial_stock_price):
+
+            raise ValueError('The second short call option must be OTM.')
+
+        if not is_otm('Call', initial_stock_price, strike_3):
+
+            raise ValueError('The last long call option must be OTM.')
+
+        self.add_position([(1, Put(strike_1)), (-1, Call(strike_2)), (1, Call(strike_3))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[0].get_strike() - H 
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() + H 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
+class BullishLongSeagullSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Bullish Long Seagull Spread')
+
+        self.initial_stock_price = initial_stock_price
+
+        if is_otm('Put', initial_stock_price, strike_1):
+
+            raise ValueError('The first long put option must be OTM.')
+
+        if is_atm('Put', initial_stock_price, strike_2, 0.1*initial_stock_price):
+
+            raise ValueError('The second short put option must be ATM.')
+
+        if is_otm('Call', initial_stock_price, strike_3):
+
+            raise ValueError('The last long call option must be OTM.')
+
+        self.add_position([(1, Put(strike_1)), (-1, Put(strike_2)), (1, Call(strike_3))])
+
+    def max_profit(self, H=None):
+
+        max_profit = np.inf 
+
+        print(f'Max Profit: {max_profit}')
+
+        return max_profit 
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() + H 
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss 
+
 if __name__ == '__main__':
 
     #initial_stock_price = 275.
