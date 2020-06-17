@@ -29,6 +29,12 @@ class EuroDerivative(ABC):
     @property
     def derivative_price(self):
 
+        if self._derivative_price is None: 
+
+            raise ValueError('You should first get the price of the '
+                             'strategy for a given set of parameters '
+                             'or provide a value.')
+
         return self._derivative_price
 
     @derivative_price.setter 

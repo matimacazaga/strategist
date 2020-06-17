@@ -12,3 +12,8 @@ The strategies already implemented are:
 + Bear Put Spread
 + Synthetic Short Forward
 + Short Risk Reversal
++ Bull Put Ladder
++ Bear Put Ladder
++ Long Strangle
++ Short Straddle
++ Short Guts
