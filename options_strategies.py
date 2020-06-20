@@ -60,11 +60,11 @@ class CoveredPut(Strategy):
 
     def max_loss(self, C=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
-        return max_loss 
+        return max_loss
 
 class ProtectiveCall(Strategy):
 
@@ -124,11 +124,11 @@ class ProtectivePut(Strategy):
 
     def max_profit(self, D=None):
 
-        max_profit = np.inf 
+        max_profit = np.inf
 
         print(f'Max Profit: {max_profit}')
 
-        return max_profit        
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -141,6 +141,50 @@ class ProtectivePut(Strategy):
         print(f'Max Loss: {max_loss:.2f}')
 
         return max_loss
+
+class BullCallSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__('Bull Call Spread')
+
+        if not is_atm('Call', initial_stock_price, strike_1):
+
+            raise ValueError('The long option must be ATM.')
+
+        if not is_otm('Call', initial_stock_price, strike_2):
+
+            raise ValueError('The short option must be OTM.')
+
+        if strike_2 < strike_1:
+
+            raise ValueError('The strike price 2 must be greater than the strike price 1')
+
+        self.add_position([(1, Call(strike_1)), (-1, Call(strike_2))])
+
+        self.initial_stock_price = initial_stock_price
+
+        def max_profit(self, D=None):
+
+            if D is None:
+
+                D = self.derivative_price
+
+            max_profit = self.positions[1] - self.positions[0] - D
+
+            print(f'Max Profit: {max_profit:.2f}')
+
+            return max_profit
+
+        def max_loss(self, D=None):
+
+            if D is None:
+
+                D = self.derivative_price
+
+            print(f'Max Profit: {D:.2f}')
+
+            return D
 
 class BullPutSpread(Strategy):
 
@@ -181,6 +225,50 @@ class BullPutSpread(Strategy):
             C = self.derivative_price
 
         max_loss = self.positions[0].get_strike() - self.positions[1].get_strike() - C
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss
+
+class BearCallSpread(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__('Bear Call Spread')
+
+        if not is_otm('Call', initial_stock_price, strike_1):
+
+            raise ValueError('The long option must be OTM.')
+
+        if not is_otm('Call', initial_stock_price, strike_2):
+
+            raise ValueError('The short option must be OTM.')
+
+        if strike_2 > strike_1:
+
+            raise ValueError('The strike price 1 must be greater than the strike price 2')
+
+        self.add_position([(1, Call(strike_1)), (-1, Call(strike_2))])
+
+        self.initial_stock_price = initial_stock_price
+
+    def max_profit(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        print(f'Max Profit: {C:.2f}')
+
+        return C
+
+    def max_loss(self, C=None):
+
+        if C is None:
+
+            C = self.derivative_price
+
+        max_loss = self.positions[0] - self.positions[1] - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -232,6 +320,40 @@ class BearPutSpread(Strategy):
 
         return D
 
+class SyntheticLongForward(Strategy):
+
+    def __init__(self, initial_stock_price, strike):
+
+        super().__init__('Synthetic Long Forward')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not is_atm('Call', initial_stock_price, strike):
+
+            raise ValueError('Both the Call and the Put must be ATM.')
+
+        self.add_position([(1, Call(strike)), (-1, Put(strike))])
+
+    def max_profit(self, H=None):
+
+        max_profit = np.inf
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.initial_stock_price + H
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss
+
 class SyntheticShortForward(Strategy):
 
     def __init__(self, initial_stock_price, strike):
@@ -260,11 +382,49 @@ class SyntheticShortForward(Strategy):
 
     def max_loss(self, H=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
-        return max_loss 
+        return max_loss
+
+class LongRiskReversal(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2):
+
+        super().__init__('Long Risk Reversal')
+
+        self.initial_stock_price = initial_stock_price
+
+        if not is_otm('Call', initial_stock_price, strike_1):
+
+            raise ValueError('The call option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The put option must be OTM.')
+
+        self.add_position([(1, Call(strike_1)), (-1, Put(strike_2))])
+
+    def max_profit(self, H=None):
+
+        max_profit = np.inf
+
+        print(f'Max Profit: {max_profit}')
+
+        return max_profit
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[1].get_strike() + H
+
+        print(f'Max Loss: {max_loss}')
+
+        return max_loss
 
 class ShortRiskReversal(Strategy):
 
@@ -298,7 +458,52 @@ class ShortRiskReversal(Strategy):
 
     def max_loss(self, H=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
+
+        print(f'Max Loss: {max_loss}')
+
+        return max_loss
+
+class BullCallLadder(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Bull Call Ladder')
+
+        self.initial_stock_price = initial_stock_price
+
+        delta_1 = initial_stock_price * 0.1
+
+        if not is_atm('Call', initial_stock_price, strike_1, delta_1):
+
+            raise ValueError('The strike price of the'
+                             'long call must be close to the initial stock price (ATM).')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The first short call option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The second short call option must be OTM.')
+
+        self.add_position([(1, Call(strike_1)), (-1, Call(strike_2)), (-1, Call(strike_3))])
+
+    def max_profit(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - H
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit
+
+    def max_loss(self, H=None):
+
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
@@ -315,7 +520,7 @@ class BullPutLadder(Strategy):
         delta_1 = initial_stock_price * 0.1
 
         if not is_atm('Put', initial_stock_price, strike_1, delta_1):
-            
+
             raise ValueError('The strike price of the'
                              'short put must be close to the initial stock price (ATM).')
 
@@ -335,7 +540,7 @@ class BullPutLadder(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[2].get_strike() + self.positions[1].get_strike() - self.positions[0].get_strike() - H 
+        max_profit = self.positions[2].get_strike() + self.positions[1].get_strike() - self.positions[0].get_strike() - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
@@ -347,7 +552,52 @@ class BullPutLadder(Strategy):
 
             H = self.derivative_price
 
-        max_loss = self.positions[0].get_strike() - self.positions[1].get_strike() + H 
+        max_loss = self.positions[0].get_strike() - self.positions[1].get_strike() + H
+
+        print(f'Max Loss: {max_loss:.2f}')
+
+        return max_loss
+
+class BearCallLadder(Strategy):
+
+    def __init__(self, initial_stock_price, strike_1, strike_2, strike_3):
+
+        super().__init__('Bear Call Ladder')
+
+        self,initial_stock_price = initial_stock_price
+
+        delta_1 = initial_stock_price * 0.1
+
+        if not is_atm('Call', initial_stock_price, strike_1, delta_1):
+
+            raise ValueError('The strike price of the'
+                             'short call must be close to the initial stock price (ATM).')
+
+        if not is_otm('Put', initial_stock_price, strike_2):
+
+            raise ValueError('The first long call option must be OTM.')
+
+        if not is_otm('Put', initial_stock_price, strike_3):
+
+            raise ValueError('The second long call option must be OTM.')
+
+        self.add_position([(-1, Call(strike_1)), (1, Call(strike_2)), (1, Call(strike_3))])
+
+    def max_profit(self, H=None):
+
+        max_profit = np.inf
+
+        print(f'Max Profit: {max_profit:.2f}')
+
+        return max_profit
+
+    def max_loss(self, H=None):
+
+        if H is None:
+
+            H = self.derivative_price
+
+        max_loss = self.positions[1].get_strike - self.positions[0].get_strike + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
@@ -361,14 +611,14 @@ class BearPutLadder(Strategy):
 
         self.initial_stock_price = initial_stock_price
 
-        delta_1 = initial_stock_price * 0.1 
+        delta_1 = initial_stock_price * 0.1
 
         if not is_atm('Put', initial_stock_price, strike_1, delta_1):
 
             raise ValueError('The strike price of the'
                              'long put must be close to the initial stock price (ATM).')
 
-        if not is_otm('Put', initial_stock_price, strike_2): 
+        if not is_otm('Put', initial_stock_price, strike_2):
 
             raise ValueError('The first short put option must be OTM.')
 
@@ -388,17 +638,17 @@ class BearPutLadder(Strategy):
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
         if H is None:
 
-            H = self.derivative_price 
+            H = self.derivative_price
 
-        max_loss = self.positions[2].get_strike() + self.positions[1].get_strike() - self.positions[0].get_strike() + H 
+        max_loss = self.positions[2].get_strike() + self.positions[1].get_strike() - self.positions[0].get_strike() + H
 
-        print(f'Max Loss: {max_loss:.2f}') 
+        print(f'Max Loss: {max_loss:.2f}')
 
         return max_loss
 
@@ -436,7 +686,7 @@ class LongStrangle(Strategy):
 
         print(f'Max Loss: {D:.2f}')
 
-        return D 
+        return D
 
 class ShortStraddle(Strategy):
 
@@ -460,15 +710,15 @@ class ShortStraddle(Strategy):
 
         print(f'Max Profit: {C:.2f}')
 
-        return C 
+        return C
 
     def max_loss(self, C=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
-        return max_loss    
+        return max_loss
 
 class ShortGuts(Strategy):
 
@@ -498,15 +748,15 @@ class ShortGuts(Strategy):
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, C=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
-        return max_loss  
+        return max_loss
 
 class LongPutSyntheticStraddle(Strategy):
 
@@ -526,11 +776,11 @@ class LongPutSyntheticStraddle(Strategy):
 
     def max_profit(self, D=None):
 
-        max_profit = np.inf 
+        max_profit = np.inf
 
         print(f'Max Profit: {max_profit}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -542,7 +792,7 @@ class LongPutSyntheticStraddle(Strategy):
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class ShortPutSyntheticStraddle(Strategy):
 
@@ -566,19 +816,19 @@ class ShortPutSyntheticStraddle(Strategy):
 
             C = self.derivative_price
 
-        max_profit = self.initial_stock_price - self.positions[1].get_strike() + C 
+        max_profit = self.initial_stock_price - self.positions[1].get_strike() + C
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, C=None):
 
-        max_loss = np.inf 
+        max_loss = np.inf
 
         print(f'Max Loss: {max_loss}')
 
-        return max_loss 
+        return max_loss
 
 class CoveredShortStrangle(CoveredCall):
 
@@ -600,11 +850,11 @@ class CoveredShortStrangle(CoveredCall):
 
             C = self.derivative_price
 
-        max_loss = self.initial_stock_price + self.positions[2].get_strike() - C 
+        max_loss = self.initial_stock_price + self.positions[2].get_strike() - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class Strip(Strategy):
 
@@ -628,11 +878,11 @@ class Strip(Strategy):
 
     def max_profit(self, D=None):
 
-        max_profit = np.inf 
+        max_profit = np.inf
 
         print(f'Max Profit: {max_profit}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -642,7 +892,7 @@ class Strip(Strategy):
 
         print(f'Max Loss: {D:.2f}')
 
-        return D   
+        return D
 
 class PutRatioBackspread(Strategy):
 
@@ -675,11 +925,11 @@ class PutRatioBackspread(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[1].quantity * self.positions[1].get_strike() - self.positions[0].quantity * self.positions[0].get_strike() - H 
+        max_profit = self.positions[1].quantity * self.positions[1].get_strike() - self.positions[0].quantity * self.positions[0].get_strike() - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -687,11 +937,11 @@ class PutRatioBackspread(Strategy):
 
             H = self.derivative_price
 
-        max_loss = self.positions[0].quantity * (self.positions[0].get_strike() - self.positions[1].get_strike()) + H 
+        max_loss = self.positions[0].quantity * (self.positions[0].get_strike() - self.positions[1].get_strike()) + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class RatioPutSpread(Strategy):
 
@@ -703,7 +953,7 @@ class RatioPutSpread(Strategy):
 
         if n_long > n_short:
 
-            raise ValueError('The amount of short positions must be greater ' 
+            raise ValueError('The amount of short positions must be greater '
                              'than the amount of long positions.')
 
         delta_1 = 0.1 * initial_stock_price
@@ -724,11 +974,11 @@ class RatioPutSpread(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[1].quantity * (self.positions[1].get_strike() - self.positions[0].get_strike()) - H 
+        max_profit = self.positions[1].quantity * (self.positions[1].get_strike() - self.positions[0].get_strike()) - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -736,11 +986,11 @@ class RatioPutSpread(Strategy):
 
             H = self.derivative_price
 
-        max_loss = self.positions[0].quantity * self.positions[0].get_strike() - self.positions[1].quantity * self.positions[1].get_strike() + H 
+        max_loss = self.positions[0].quantity * self.positions[0].get_strike() - self.positions[1].quantity * self.positions[1].get_strike() + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class LongPutButterfly(Strategy):
 
@@ -774,11 +1024,11 @@ class LongPutButterfly(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D 
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -788,7 +1038,7 @@ class LongPutButterfly(Strategy):
 
         print(f'Max Loss: {D:.2f}')
 
-        return D   
+        return D
 
 class ModifiedLongPutButterfly(Strategy):
 
@@ -823,11 +1073,11 @@ class ModifiedLongPutButterfly(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[2].get_strike() - self.positions[1].get_strike() - H 
+        max_profit = self.positions[2].get_strike() - self.positions[1].get_strike() - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -839,7 +1089,7 @@ class ModifiedLongPutButterfly(Strategy):
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class ShortPutButterfly(Strategy):
 
@@ -875,7 +1125,7 @@ class ShortPutButterfly(Strategy):
 
         print(f'Max Profit: {C:.2f}')
 
-        return C 
+        return C
 
     def max_loss(self, C=None):
 
@@ -883,11 +1133,11 @@ class ShortPutButterfly(Strategy):
 
             C = self.derivative_price
 
-        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() - C  
+        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class ShortIronButterfly(Strategy):
 
@@ -921,21 +1171,21 @@ class ShortIronButterfly(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
-    
+        return max_profit
+
     def max_loss(self, D=None):
 
         if D is None:
 
             D = self.derivative_price
-        
+
         print(f'Max Loss: {D:.2f}')
 
-        return D   
+        return D
 
 class LongPutCondor(Strategy):
 
@@ -945,11 +1195,11 @@ class LongPutCondor(Strategy):
 
         self.initial_stock_price = initial_stock_price
 
-        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1:
 
             raise ValueError('Strike prices must be equidistant.')
 
-        if not strike_2 > strike_1: 
+        if not strike_2 > strike_1:
 
             raise ValueError('Strike price 2 must be greater than strike price 1.')
 
@@ -981,11 +1231,11 @@ class LongPutCondor(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -995,7 +1245,7 @@ class LongPutCondor(Strategy):
 
         print(f'Max Loss: {D:.2f}')
 
-        return D   
+        return D
 
 class ShortPutCondor(Strategy):
 
@@ -1005,11 +1255,11 @@ class ShortPutCondor(Strategy):
 
         self.initial_stock_price = initial_stock_price
 
-        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1:
 
             raise ValueError('Strike prices must be equidistant.')
 
-        if not strike_2 > strike_1: 
+        if not strike_2 > strike_1:
 
             raise ValueError('Strike price 2 must be greater than strike price 1.')
 
@@ -1043,7 +1293,7 @@ class ShortPutCondor(Strategy):
 
         print(f'Max Profit: {C:.2f}')
 
-        return C   
+        return C
 
     def max_loss(self, C=None):
 
@@ -1051,11 +1301,11 @@ class ShortPutCondor(Strategy):
 
             C = self.derivative_price
 
-        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() - C  
+        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() - C
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class ShortIronCondor(Strategy):
 
@@ -1065,11 +1315,11 @@ class ShortIronCondor(Strategy):
 
         self.initial_stock_price = initial_stock_price
 
-        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1: 
+        if not strike_4 - strike_3 == strike_3 - strike_2 and not strike_3 - strike_2 == strike_2 - strike_1:
 
             raise ValueError('Strike prices must be equidistant.')
 
-        if not strike_2 > strike_1: 
+        if not strike_2 > strike_1:
 
             raise ValueError('Strike price 2 must be greater than strike price 1.')
 
@@ -1101,11 +1351,11 @@ class ShortIronCondor(Strategy):
 
             D = self.derivative_price
 
-        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D   
+        max_profit = self.positions[1].get_strike() - self.positions[0].get_strike() - D
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit  
+        return max_profit
 
     def max_loss(self, D=None):
 
@@ -1115,7 +1365,7 @@ class ShortIronCondor(Strategy):
 
         print(f'Max Loss: {D:.2f}')
 
-        return D   
+        return D
 
 class Collar(CoveredCall):
 
@@ -1146,11 +1396,11 @@ class Collar(CoveredCall):
 
             H = self.derivative_price
 
-        max_profit = self.positions[1].get_strike() - self.initial_stock_price - H 
+        max_profit = self.positions[1].get_strike() - self.initial_stock_price - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -1158,11 +1408,11 @@ class Collar(CoveredCall):
 
             H = self.derivative_price
 
-        max_loss = self.initial_stock_price - self.positions[0].get_strike + H 
+        max_loss = self.initial_stock_price - self.positions[0].get_strike + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class BearishLongSeagullSpread(Strategy):
 
@@ -1192,11 +1442,11 @@ class BearishLongSeagullSpread(Strategy):
 
             H = self.derivative_price
 
-        max_profit = self.positions[0].get_strike() - H 
+        max_profit = self.positions[0].get_strike() - H
 
         print(f'Max Profit: {max_profit:.2f}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -1204,11 +1454,11 @@ class BearishLongSeagullSpread(Strategy):
 
             H = self.derivative_price
 
-        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() + H 
+        max_loss = self.positions[2].get_strike() - self.positions[1].get_strike() + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 class BullishLongSeagullSpread(Strategy):
 
@@ -1234,11 +1484,11 @@ class BullishLongSeagullSpread(Strategy):
 
     def max_profit(self, H=None):
 
-        max_profit = np.inf 
+        max_profit = np.inf
 
         print(f'Max Profit: {max_profit}')
 
-        return max_profit 
+        return max_profit
 
     def max_loss(self, H=None):
 
@@ -1246,11 +1496,11 @@ class BullishLongSeagullSpread(Strategy):
 
             H = self.derivative_price
 
-        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() + H 
+        max_loss = self.positions[1].get_strike() - self.positions[0].get_strike() + H
 
         print(f'Max Loss: {max_loss:.2f}')
 
-        return max_loss 
+        return max_loss
 
 if __name__ == '__main__':
 

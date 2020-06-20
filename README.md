@@ -8,11 +8,17 @@ The strategies already implemented are:
 + Covered Call
 + Protective Call
 + Protective Put
++ Bull Call Spread
 + Bull Put Spread
++ Bear Call Spread
 + Bear Put Spread
++ Synthetich Long Forward
 + Synthetic Short Forward
++ Long Risk Reversal
 + Short Risk Reversal
++ Bull Call Ladder
 + Bull Put Ladder
++ Bear Call Ladder
 + Bear Put Ladder
 + Long Strangle
 + Short Straddle
