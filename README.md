@@ -39,3 +39,4 @@ The strategies already implemented are:
 + Collar
 + Bearish Long Seagull Spread
 + Bullish Long Seagull Spread
++

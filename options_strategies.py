@@ -1504,7 +1504,7 @@ class BullishLongSeagullSpread(Strategy):
 
 if __name__ == '__main__':
 
-    #initial_stock_price = 275.
+    #initial_stock_price =  275.
     initial_stock_price = 60.
 
     #strategy = SyntheticShortForward(initial_stock_price)
