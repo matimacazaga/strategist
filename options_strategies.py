@@ -652,7 +652,7 @@ class BearPutLadder(Strategy):
 
         return max_loss
 
-class LongStraddle(Strategist):
+class LongStraddle(Strategy):
 
     def __init__(self, initial_stock_price, strike):
 
