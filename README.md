@@ -58,3 +58,4 @@ The strategies already implemented are:
 + Bearish Long Seagull Spread
 + Bearish SHort Seagull Spread
 + Bullish Long Seagull Spread
++

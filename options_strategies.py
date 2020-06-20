@@ -2026,6 +2026,7 @@ class ShortIronCondor(Strategy):
 
         self.add_position([(-1, Put(strike_1)), (1, Put(strike_2)), (1, Call(strike_3)), (-1, Call(strike_4))])
 
+
     def max_profit(self, D=None):
 
         if D is None:
